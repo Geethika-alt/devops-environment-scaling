@@ -128,6 +128,47 @@ Once final QA validation is completed:
 
 ---
 
+# Sample GitHub Actions Workflow
+
+```yaml
+name: Preview Environment
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, closed]
+
+jobs:
+  deploy:
+    if: github.event.action != 'closed'
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build
+        run: |
+         docker build -t preview-app .
+
+      - name: Deploy preview
+        run: |
+          kubectl apply -f kubernetes/
+
+      - name: Comment URL
+        run: |
+          echo "post preview URL to PR"
+
+  cleanup:
+    if: github.event.action == 'closed'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Destroy preview
+        run: |
+          kubectl delete namespace feature-${{ github.event.number }}
+```
+
+---
+
 # Technologies Used
 
 - GitHub
